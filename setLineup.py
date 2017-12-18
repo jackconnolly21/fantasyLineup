@@ -10,7 +10,7 @@ import time
 import re
 import csv
 
-class fntsyLu(unittest.TestCase):
+class setLineup(unittest.TestCase):
 	# Sets up the chrome driver
 	def setUp(self):
 		self.driver = webdriver.Chrome('/Users/jackconnolly/Documents/Execs/chromedriver')
