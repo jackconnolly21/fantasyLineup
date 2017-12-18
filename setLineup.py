@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
 
-import sys
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
@@ -9,14 +8,15 @@ import smtplib
 import unittest
 import time
 import re
+import csv
 
 class fntsyLu(unittest.TestCase):
 	# Sets up the chrome driver
 	def setUp(self):
-		self.driver = webdriver.Chrome()
+		self.driver = webdriver.Chrome('/Users/jackconnolly/Documents/Execs/chromedriver')
 		self.driver.get("http://www.espn.com/fantasy/basketball/")
-	
-	# Method to return the row number of the player 
+
+	# Method to return the row number of the player
 	def getNumber(self, num):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
@@ -90,7 +90,7 @@ class fntsyLu(unittest.TestCase):
 
 		return leagueName
 
-	# Checks is row 13 is an Injury-Reserve row. 
+	# Checks is row 13 is an Injury-Reserve row.
 	def checkRow13(self):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
@@ -112,11 +112,21 @@ class fntsyLu(unittest.TestCase):
 
 		rows = wait.until(lambda driver: driver.find_elements_by_class_name("playerEditSlot"))
 
-		if(len(rows) - 1 == 14) and self.checkRow13():
-			return len(rows) - 2
-		else:
-			pass
+		# Accounting for an IR spot in the 13th row, ignoring for now
+		# if(len(rows) - 1 == 14) and self.checkRow13():
+		# 	return len(rows) - 2
+
 		return len(rows) - 1
+
+	def getNumStartersWithGame(self):
+		self.setPlayerList()
+		for i in range(0, 9):
+			count = 0
+			string = "pncPlayerRow_" + self.getNumber(i)
+			playerGameStatus = "//*[@id=" + "\'" + string + "\'" + "]/td[6]/a"
+			if self.hasGame(playerGameStatus):
+				count += 1
+		return count
 
 	# Sets the player list in the order that the page was loaded.
 	def setPlayerList(self):
@@ -130,9 +140,9 @@ class fntsyLu(unittest.TestCase):
 		global playerList
 		playerList = []
 		for d in range(0, len(digits), 1):
-			playerList.insert(d, digits[d]) 
-	
-	# Returns a list of players who are on the bench AND have a game scheduled.			
+			playerList.insert(d, digits[d])
+
+	# Returns a list of players who are on the bench AND have a game scheduled.
 	def getBenchList(self):
 		self.setPlayerList()
 		benchPlayerList = []
@@ -142,8 +152,8 @@ class fntsyLu(unittest.TestCase):
 			str = "pncPlayerRow_" + self.getNumber(i)
 			playerGameStatus = "//*[@id=" + "\'" + str + "\'" + "]/td[6]/a"
 			benchPlayerGameStatuses.insert(count, self.hasGame(playerGameStatus))
-			if self.getNumOfRows() > 13:
-				x = self.getNumOfRows() - 13
+			if self.getNumOfRows() > 16:
+				x = self.getNumOfRows() - 16
 				num = i - x
 			else:
 				num = i
@@ -163,11 +173,12 @@ class fntsyLu(unittest.TestCase):
 		emailServer = smtplib.SMTP('smtp.gmail.com', 587)
 		emailServer.ehlo()
 		emailServer.starttls()
-		email = ""   					# Insert email you created here
-		password = "" 					# Insert password for email here
-		recipientEmail = "" 			# Insert your personal email here
+		emailInfo = self.readCSV('email.csv')
+		email = emailInfo[0]   					# Insert email you created here
+		password = emailInfo[1] 					# Insert password for email here
+		recipientEmail = emailInfo[0] 			# Insert your personal email here (if different than the one you're sending from)
 		emailServer.login(email, password)
-		emailBody = emailBody = '\nHey ' + self.getOwnerName() + ', there was an issue with setting your lineup for ' + self.getTeamName() + '. Could not get ' + str(len(players)) + ' player into your starting lineup even though he has a game.'
+		emailBody = '\nHey ' + self.getOwnerName() + ', there was an issue with setting your lineup for ' + self.getTeamName() + '. Could not get ' + str(len(players)) + ' player into your starting lineup even though he has a game.'
 		if len(players) > 1:
 			emailBody = '\nHey ' + self.getOwnerName() + ', there was an issue with setting your lineup for ' + self.getTeamName() + '. Could not get ' + str(len(players)) + ' players into your starting lineup even though they have games.'
 		emailServer.sendmail(email, recipientEmail,
@@ -202,7 +213,7 @@ class fntsyLu(unittest.TestCase):
 			return True
 		return False
 
-	# Checks if a player has been moved to a row corresponding to his position. 
+	# Checks if a player has been moved to a row corresponding to his position.
 	def toPosition(self, positionList, num):
 		count = 0
 		for i in range(0, len(positionList), 1):
@@ -210,28 +221,18 @@ class fntsyLu(unittest.TestCase):
 			if positionList[i] == "PG":
 				if self.clickHereOnPosition(0, num, count):
 					return True
-				else: 
-					pass
 			elif positionList[i] == "SG":
 				if self.clickHereOnPosition(1, num, count):
 					return True
-				else: 
-					pass
 			elif positionList[i] == "SF":
 				if self.clickHereOnPosition(2, num, count):
 					return True
-				else:
-					pass
 			elif positionList[i] == "PF":
 				if self.clickHereOnPosition(3, num, count):
 					return True
-				else:
-					pass
 			elif positionList[i] == "C" or positionList[i] == ";C":
 				if self.clickHereOnPosition(4, num, count):
 					return True
-				else: 
-					pass
 		return False
 
 	# If player could not be moved into one of the UTIL rows, a player is moved to the starting lineup. This method initializes
@@ -244,7 +245,7 @@ class fntsyLu(unittest.TestCase):
 
 	# Clicks the 'here' buttons and finalizes that the player is moved into the starting lineup.
 	def clickHereOnUtil(self, str, str2, num, num2):
-		driver = self.driver 
+		driver = self.driver
 		wait = WebDriverWait(driver, 10)
 		if self.hasGame(str):
 			if num2 == 9 and len(self.getBenchList()) > 0:
@@ -265,19 +266,17 @@ class fntsyLu(unittest.TestCase):
 		stringList = [playerRowGameStatus, playerRowButton]
 		return stringList
 
-	# Moves player to the UTIL 
+	# Moves player to the UTIL
 	def toUtil(self, num):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
 		for i in range(7, 10, 1):
-			utilHereStrings = self.initializeHereStrings(i) 
+			utilHereStrings = self.initializeHereStrings(i)
 			if self.clickHereOnUtil(utilHereStrings[0], utilHereStrings[1], num, i):
 				return
-			else:
-				pass
 		return
 
-	# Initializes the strings in order for selenium the find the web element for a player's move button. 
+	# Initializes the strings in order for selenium the find the web element for a player's move button.
 	def initializeMoveStrings(self, num, num2):
 		stringList = []
 		playerRow = "pncPlayerRow_" + self.getNumber(num)
@@ -287,24 +286,22 @@ class fntsyLu(unittest.TestCase):
 		stringList = [playerRowGameStatus, playerRowButton]
 		return stringList
 
-	# Clicks the player's move button 
+	# Clicks the player's move button
 	def movePlayer(self, str, str2, num):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
 		if self.hasGame(str):
 			buttonElement = wait.until(lambda driver: driver.find_element_by_xpath(str2))
-			time.sleep(2)
+			time.sleep(0.5)
 			buttonElement.click()
-			if self.getNumOfRows() > 13 and num > self.getNumOfRows() - 13:
+			if self.getNumOfRows() > 16 and num > self.getNumOfRows() - 16:
 				self.toUtil(num)
 			elif num > 9:
 				self.toUtil(num)
 			else:
 				self.toSL(num)
-		else:
-			pass
 
-	# Clicks the submit lineup button. 
+	# Clicks the submit lineup button.
 	def submitLineUp(self):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
@@ -319,8 +316,8 @@ class fntsyLu(unittest.TestCase):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
 		for i in range(10, self.getNumOfRows(), 1):
-			if self.getNumOfRows() > 13:
-				x = self.getNumOfRows() - 13
+			if self.getNumOfRows() > 16:
+				x = self.getNumOfRows() - 16
 				num = i - x
 			else:
 				num = i
@@ -328,7 +325,7 @@ class fntsyLu(unittest.TestCase):
 			rowStrings = self.initializeMoveStrings(i, num)
 			self.movePlayer(rowStrings[0], rowStrings[1], num)
 
-	# Checks the three UTIL rows to see if they could be moved into the starting lineup. 
+	# Checks the three UTIL rows to see if they could be moved into the starting lineup.
 	def checkUtil(self):
 		self.submitLineUp()
 		for i in range(7, 10, 1):
@@ -337,12 +334,20 @@ class fntsyLu(unittest.TestCase):
 			self.movePlayer(utilStrings[0], utilStrings[1], num)
 		self.checkBench()
 
+	def readCSV(self, csvFile):
+	    info = []
+	    with open(csvFile, 'rb') as csvfile:
+	        reader = csv.reader(csvfile, delimiter=',')
+	        for row in reader:
+	            info.append(row)
+	    return info
+
 	# Clicks login button on ESPN Fantasy homepage and inserts your account info.
-	def login(self):
+	def login(self, info):
 		# initialize variables
 		driver = self.driver
-		username = "" 					# Insert your username here
-		password = ""					# Insert your password here
+		username = info[0] 					# Insert your username here
+		password = info[1]					# Insert your password here
 		wait = WebDriverWait(driver, 10)
 
 		# click Log In button
@@ -353,10 +358,10 @@ class fntsyLu(unittest.TestCase):
 		# find email and pass ID
 		emailFieldID = "//*[@id='did-ui']/div/div/section/section/form/section/div[1]/div/label/span[2]/input"
 		passFieldID = "//*[@id='did-ui']/div/div/section/section/form/section/div[2]/div/label/span[2]/input"
-		
+
 		# switch to frame so script can type
 		driver.switch_to.frame("disneyid-iframe")
-		
+
 		# find email input box and type in email
 		emailFieldElement = wait.until(lambda driver: driver.find_element_by_xpath(emailFieldID))
 		emailFieldElement.click()
@@ -368,17 +373,16 @@ class fntsyLu(unittest.TestCase):
 		passFieldElement.click()
 		passFieldElement.clear()
 		passFieldElement.send_keys(password)
-		
+
 		# click log in button
 		loginButtonXpath2 = "//*[@id='did-ui']/div/div/section/section/form/section/div[3]/button[2]"
 		loginButtonElement2 = wait.until(lambda driver: driver.find_element_by_xpath(loginButtonXpath2))
 		loginButtonElement2.click()
 
-		leagueID = str(self.LEAGUEID)
-		teamID = str(self.TEAMID)
-		seasonID = str(self.SEASONID)
+		leagueID = info[2]
+		teamID = info[3]
+		seasonID = info[4]
 		leagueURL = "http://games.espn.com/fba/clubhouse?leagueId=" + leagueID + "&teamId=" + teamID + "&seasonId=" + seasonID
-		# print leagueURL
 		time.sleep(4)
 		driver.get(leagueURL)
 		time.sleep(4)
@@ -389,36 +393,29 @@ class fntsyLu(unittest.TestCase):
 		self.driver.quit()
 
 	def test_main(self):
-		self.login()
-		time.sleep(2)
-		driver = self.driver
-		wait = WebDriverWait(driver, 10)
-		self.setPlayerList()
-		# print len(playerList)
-		self.checkBench()
-		benchList = self.getBenchList()
-		if len(benchList) > 0:
+		teams = self.readCSV('teams.csv')
+		for team in teams:
+			self.login(team)
+			time.sleep(2)
+			driver = self.driver
+			wait = WebDriverWait(driver, 10)
 			self.setPlayerList()
-			self.checkUtil()
+			self.checkBench()
+			benchList = self.getBenchList()
+			if len(benchList) > 0:
+				self.setPlayerList()
+				self.checkUtil()
+				self.submitLineUp()
+				newBenchList = self.getBenchList()
+
+			if len(benchList) > 0 and self.getNumStartersWithGame() < 10:
+				self.sendEmail(newBenchList)
+
+			self.sendEmail(benchList)
+
 			self.submitLineUp()
-			newBenchList = self.getBenchList()
-		else:
-			pass
-
-
-		if len(benchList) > 0:
-			self.sendEmail(newBenchList)
-		else:
-			pass
-		# self.sendEmail(benchList)
-		self.submitLineUp()
-		time.sleep(2)
-		self.tearDown()
+			time.sleep(2)
+			self.tearDown()
 
 if __name__ == '__main__':
-	if len(sys.argv) > 1:
-		fntsyLu.SEASONID = sys.argv.pop()
-		fntsyLu.TEAMID = sys.argv.pop()
-		fntsyLu.LEAGUEID = sys.argv.pop()
 	unittest.main()
-		
