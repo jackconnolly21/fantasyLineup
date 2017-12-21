@@ -152,8 +152,8 @@ class setLineup(unittest.TestCase):
 			str = "pncPlayerRow_" + self.getNumber(i)
 			playerGameStatus = "//*[@id=" + "\'" + str + "\'" + "]/td[6]/a"
 			benchPlayerGameStatuses.insert(count, self.hasGame(playerGameStatus))
-			if self.getNumOfRows() > 16:
-				x = self.getNumOfRows() - 16
+			if self.getNumOfRows() > self.ROSTERSIZE:
+				x = self.getNumOfRows() - self.ROSTERSIZE
 				num = i - x
 			else:
 				num = i
@@ -173,7 +173,7 @@ class setLineup(unittest.TestCase):
 		emailServer = smtplib.SMTP('smtp.gmail.com', 587)
 		emailServer.ehlo()
 		emailServer.starttls()
-		emailInfo = self.readCSV('email.csv')
+		emailInfo = self.readCSV('email.csv')[0]
 		email = emailInfo[0]   					# Insert email you created here
 		password = emailInfo[1] 					# Insert password for email here
 		recipientEmail = emailInfo[0] 			# Insert your personal email here (if different than the one you're sending from)
@@ -294,7 +294,7 @@ class setLineup(unittest.TestCase):
 			buttonElement = wait.until(lambda driver: driver.find_element_by_xpath(str2))
 			time.sleep(0.5)
 			buttonElement.click()
-			if self.getNumOfRows() > 16 and num > self.getNumOfRows() - 16:
+			if self.getNumOfRows() > self.ROSTERSIZE and num > self.getNumOfRows() - self.ROSTERSIZE:
 				self.toUtil(num)
 			elif num > 9:
 				self.toUtil(num)
@@ -316,8 +316,8 @@ class setLineup(unittest.TestCase):
 		driver = self.driver
 		wait = WebDriverWait(driver, 10)
 		for i in range(10, self.getNumOfRows(), 1):
-			if self.getNumOfRows() > 16:
-				x = self.getNumOfRows() - 16
+			if self.getNumOfRows() > self.ROSTERSIZE:
+				x = self.getNumOfRows() - self.ROSTERSIZE
 				num = i - x
 			else:
 				num = i
@@ -410,12 +410,13 @@ class setLineup(unittest.TestCase):
 
 			if len(benchList) > 0 and self.getNumStartersWithGame() < 10:
 				self.sendEmail(newBenchList)
-
-			self.sendEmail(benchList)
+			else:
+				self.sendEmail()
 
 			self.submitLineUp()
 			time.sleep(2)
 			self.tearDown()
 
 if __name__ == '__main__':
+	setLineup.ROSTERSIZE = 16
 	unittest.main()

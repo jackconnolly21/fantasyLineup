@@ -1,4 +1,4 @@
-# fntsylu
+# fantasyLineup
 ESPN Fantasy Basketball Daily Lineup Automator
 
 This is a script to set my ESPN Fantasy Basketball lineup daily. Not fully automative as it does not add players off
@@ -11,7 +11,7 @@ First, you'll need to install:
  - google-chrome
  - selenium webdriver
 
-Next, clone or download the repository and extract the fntsylu folder. Now, open up the teams.csv file in any text editor and enter the following, with no spaces between the fields, and all in one line.
+Next, clone or download the repository and extract the fantasyLineup folder. Now, open up the teams.csv file in any text editor and enter the following, with no spaces between the fields, and all in one line.
 
 ```
 'ESPN Username','ESPN Password','LeagueID','TeamID','SeasonID'
@@ -23,7 +23,7 @@ If you want to automate more than one team, with possibly different ESPN account
 
 '7609' is the ID of the league that I want to enter. '18' is the team ID. You can find your league and team ID by reading the url of the homepage of your fantasy league. '2018' is just the current year.
 
-Before you edit this file, you'll need to create a gmail account that will notify you when there are players still on your bench. After you create the email, go back into the email.csv file and add the following line:
+Next, efore you edit this file, you'll need to create a gmail account that will notify you when there are players still on your bench. After you create the email, go back into the email.csv file and add the following line:
 
 ```
 'Gmail Username','Gmail Password'
@@ -31,8 +31,10 @@ Before you edit this file, you'll need to create a gmail account that will notif
 
 If you want the email sent to an account other than this one, you can edit the sendEmail function, setting `recipientEmail` to the email desired.
 
+Finally, this automation is currently set up for 16-man rosters, but this can be easily changed by changing the `setLineup.ROSTERSIZE` variable at the end of the code.
+
 Once you find your league and team IDs and your email, go to your command line and change directory to the fntsylu folder, then type the following:
- > python fntsylu.py
+ > python setLineup.py
 
 Chrome should open up and the script should be setting your lineup
 
