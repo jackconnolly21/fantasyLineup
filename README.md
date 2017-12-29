@@ -11,30 +11,28 @@ First, you'll need to install:
  - google-chrome
  - selenium webdriver
 
-Next, clone or download the repository and extract the fantasyLineup folder. Now, open up the teams.csv file in any text editor and enter the following, with no spaces between the fields, and all in one line.
+Next, clone or download the repository and extract the fantasyLineup folder.
 
-```
-'ESPN Username','ESPN Password','LeagueID','TeamID','SeasonID'
+Then, before you edit this next method, you'll need to create a gmail account that will notify you when there are players still on your bench. After you create the email, go back into the `sendEmail()` function and change the following lines:
 
-```
-If you want to automate more than one team, with possibly different ESPN accounts, add a line of information for each team in the teams.csv file and each lineup will be set when the code is run. An example of a correct entry might be:
-
-> fntsyBballGuy,password123,7609,18,2018
-
-'7609' is the ID of the league that I want to enter. '18' is the team ID. You can find your league and team ID by reading the url of the homepage of your fantasy league. '2018' is just the current year.
-
-Next, efore you edit this file, you'll need to create a gmail account that will notify you when there are players still on your bench. After you create the email, go back into the email.csv file and add the following line:
-
-```
-'Gmail Username','Gmail Password'
+```python
+def sendEmail(self, players):
+   // some code ///
+   email = ""          # Insert the email you just created
+   password = ""       # Insert the password for the email you just created
+   recipientEmail = "" # Insert the email you want to be notified (your personal email)
+   // rest of the code //
 ```
 
-If you want the email sent to an account other than this one, you can edit the sendEmail function, setting `recipientEmail` to the email desired.
+Additionally, this automation is currently set up for 16-man rosters, but this can be easily changed by changing the `setLineup.ROSTERSIZE` variable at the end of the code.
 
-Finally, this automation is currently set up for 16-man rosters, but this can be easily changed by changing the `setLineup.ROSTERSIZE` variable at the end of the code.
+Finally, to run the automation you need to find some information about your ESPN team and account. The first two arguments are the username and password for your ESPN account, respectively. The third is the LeagueID for your league and the fourth is your TeamID, which can be found by reading the url of the homepage of your fantasy league. Finally, the last argument is the SeasonID (just the year).
 
-Once you find your league and team IDs and your email, go to your command line and change directory to the fntsylu folder, then type the following:
- > python setLineup.py
+In order this is: 'ESPN Username' 'ESPN Password' 'LeagueID' 'TeamID' 'SeasonID'
+
+For example:
+
+ > python setLineup.py fntsyBballGuy password123 7609 18 2018
 
 Chrome should open up and the script should be setting your lineup
 
@@ -44,6 +42,6 @@ Next, you can set up cron to run the command for you. In the terminal, type
  > crontab -e
 
 And enter the following at the bottom of the crontab file:
- > 0 11 * * * export DISPLAY=:0; /usr/bin/python /path/to/setLineup.py
+ > 0 11 * * * export DISPLAY=:0; /usr/bin/python /path/to/setLineup.py 'ESPN Username' 'ESPN Password' 'LeagueID' 'TeamID' 'SeasonID'
 
 For the example line above, cron will run the script every day at 11.

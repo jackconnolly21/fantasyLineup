@@ -8,7 +8,7 @@ import smtplib
 import unittest
 import time
 import re
-import csv
+import sys
 
 class setLineup(unittest.TestCase):
 	# Sets up the chrome driver
@@ -173,10 +173,9 @@ class setLineup(unittest.TestCase):
 		emailServer = smtplib.SMTP('smtp.gmail.com', 587)
 		emailServer.ehlo()
 		emailServer.starttls()
-		emailInfo = self.readCSV('email.csv')[0]
-		email = emailInfo[0]   					# Insert email you created here
-		password = emailInfo[1] 					# Insert password for email here
-		recipientEmail = emailInfo[0] 			# Insert your personal email here (if different than the one you're sending from)
+		email = "connollyboys21@gmail.com"  					# Insert email you created here
+		password = "bballjack7" 					# Insert password for email here
+		recipientEmail = "connollyboys21@gmail.com"		# Insert your personal email here (if different than the one you're sending from)
 		emailServer.login(email, password)
 		emailBody = '\nHey ' + self.getOwnerName() + ', there was an issue with setting your lineup for ' + self.getTeamName() + '. Could not get ' + str(len(players)) + ' player into your starting lineup even though he has a game.'
 		if len(players) > 1:
@@ -334,20 +333,12 @@ class setLineup(unittest.TestCase):
 			self.movePlayer(utilStrings[0], utilStrings[1], num)
 		self.checkBench()
 
-	def readCSV(self, csvFile):
-	    info = []
-	    with open(csvFile, 'rb') as csvfile:
-	        reader = csv.reader(csvfile, delimiter=',')
-	        for row in reader:
-	            info.append(row)
-	    return info
-
 	# Clicks login button on ESPN Fantasy homepage and inserts your account info.
-	def login(self, info):
+	def login(self):
 		# initialize variables
 		driver = self.driver
-		username = info[0] 					# Insert your username here
-		password = info[1]					# Insert your password here
+		username = str(self.USERNAME) 					# Insert your username here
+		password = str(self.PASSWORD)					# Insert your password here
 		wait = WebDriverWait(driver, 10)
 
 		# click Log In button
@@ -379,9 +370,9 @@ class setLineup(unittest.TestCase):
 		loginButtonElement2 = wait.until(lambda driver: driver.find_element_by_xpath(loginButtonXpath2))
 		loginButtonElement2.click()
 
-		leagueID = info[2]
-		teamID = info[3]
-		seasonID = info[4]
+		leagueID = str(self.LEAGUEID)
+		teamID = str(self.TEAMID)
+		seasonID = str(self.SEASONID)
 		leagueURL = "http://games.espn.com/fba/clubhouse?leagueId=" + leagueID + "&teamId=" + teamID + "&seasonId=" + seasonID
 		time.sleep(4)
 		driver.get(leagueURL)
@@ -393,30 +384,34 @@ class setLineup(unittest.TestCase):
 		self.driver.quit()
 
 	def test_main(self):
-		teams = self.readCSV('teams.csv')
-		for team in teams:
-			self.login(team)
-			time.sleep(2)
-			driver = self.driver
-			wait = WebDriverWait(driver, 10)
+		self.login()
+		time.sleep(2)
+		driver = self.driver
+		wait = WebDriverWait(driver, 10)
+		self.setPlayerList()
+		self.checkBench()
+		benchList = self.getBenchList()
+		if len(benchList) > 0:
 			self.setPlayerList()
-			self.checkBench()
-			benchList = self.getBenchList()
-			if len(benchList) > 0:
-				self.setPlayerList()
-				self.checkUtil()
-				self.submitLineUp()
-				newBenchList = self.getBenchList()
-
-			if len(benchList) > 0 and self.getNumStartersWithGame() < 10:
-				self.sendEmail(newBenchList)
-			else:
-				self.sendEmail()
-
+			self.checkUtil()
 			self.submitLineUp()
-			time.sleep(2)
-			self.tearDown()
+			newBenchList = self.getBenchList()
+
+		if len(benchList) > 0 and self.getNumStartersWithGame() < 10:
+			self.sendEmail(newBenchList)
+		else:
+			self.sendEmail(benchList)
+
+		self.submitLineUp()
+		time.sleep(2)
+		self.tearDown()
 
 if __name__ == '__main__':
 	setLineup.ROSTERSIZE = 16
+	if len(sys.argv) > 1:
+		setLineup.SEASONID = sys.argv.pop()
+		setLineup.TEAMID = sys.argv.pop()
+		setLineup.LEAGUEID = sys.argv.pop()
+		setLineup.PASSWORD = sys.argv.pop()
+		setLineup.USERNAME = sys.argv.pop()
 	unittest.main()
