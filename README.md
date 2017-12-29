@@ -3,7 +3,7 @@ ESPN Fantasy Basketball Daily Lineup Automator
 
 This is a script to set my ESPN Fantasy Basketball lineup daily. Not fully automative as it does not add players off
 the bench and into the starting lineup if all the spots are taken, and of course, the players in those spots have games.
-In that case, the script sends me an email with the amount of players who were unable to be added to the lineup. This is a slightly modified version of michael-langaman's fntsylu script which can be found [here](https://github.com/michael-langaman/fntsylu). 
+In that case, the script sends me an email with the amount of players who were unable to be added to the lineup. This is a slightly modified version of michael-langaman's fntsylu script which can be found [here](https://github.com/michael-langaman/fntsylu).
 
 # How to use
 
@@ -30,7 +30,7 @@ Finally, to run the automation you need to find some information about your ESPN
 
 In order this is: 'ESPN Username' 'ESPN Password' 'LeagueID' 'TeamID' 'SeasonID'
 
-For example:
+For example to run the file, navigate to the fantasyLineup folder in your terminal and type the following, replacing the arguments with your information:
 
  > python setLineup.py fntsyBballGuy password123 7609 18 2018
 
